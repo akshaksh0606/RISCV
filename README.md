@@ -1,2 +1,49 @@
-# RISCV
-RISC-V 32-bit Single-Cycle ProcessorThis repository contains a complete Verilog implementation of a single-cycle RISC-V (RV32I) processor. The design is specifically optimized for implementation on the Basys 3 FPGA, featuring a hardware display interface for real-time debugging.  🏗️ Architecture OverviewThe core follows a classic single-cycle architecture where each instruction is fetched, decoded, and executed in one clock cycle.  Key Components:RISCV_CORE: The top-level processor module connecting the datapath and control logic.  ALU (Arithmetic Logic Unit): Handles arithmetic (ADD, SUB), logical (AND, OR, XOR), and comparison (SLT) operations.  Control Unit: Decodes the 7-bit opcode, funct3, and funct7 fields to generate control signals for the datapath.  Imm Gen: Extracts and sign-extends immediates for I-type, S-type, B-type, and J-type instructions.  Register File: A 32x32-bit internal memory where register x0 is hardwired to zero.  Memory: Separate instruction memory (ROM-like) and data memory (supporting LW/SW).  🕹️ Supported InstructionsThe processor currently supports the following RV32I instruction subsets:TypeInstructionsR-TypeADD, SUB, XOR, OR, AND, SLT   I-TypeADDI, XORI, SLTI, LW   S-TypeSW   B-TypeBEQ   J-TypeJAL   🛠️ FPGA Implementation (Basys 3)The project includes a top-level wrapper (basys3_top) designed for the Xilinx Basys 3 board:  Clock Management: Includes a clock divider that slows the 100MHz onboard clock down to ~1Hz (via clk_div[26]) so you can observe the execution step-by-step.  Seven-Segment Display: Displays the lower 16 bits of the current ALU result.  LEDs: The lower 16 bits of the ALU result are also mapped directly to the onboard LEDs.  Reset: The center button (btnC) is mapped to the hardware reset
+# RISC-V Single-Cycle Processor
+A 32-bit single-cycle RISC-V CPU implemented in Verilog and deployed on the Basys 3 FPGA board. The processor executes a Fibonacci sequence generator in hardware, displaying running results on the onboard 7-segment display and LEDs.
+
+# Features
+-32-bit single-cycle datapath following the RISC-V RV32I base integer ISA
+
+-Supports R-type, I-type, B-type, S-type, and J-type instruction formats
+
+-Integrated instruction memory, data memory, and 32-entry register file
+
+-Hardware Fibonacci sequence demo hard-coded into instruction memory
+
+-Basys 3 top-level with clock divider (~1 Hz), 7-segment display driver, and LED output
+
+-Modular design
+
+# Supported Instructions
+
+R Type - ADD, SUB, XOR, OR, AND, SLT
+
+I Type - ADDI, XORI, SLTI, LW
+
+S Type - SW
+
+B Type - BEQ
+
+J Type - JAL
+
+
+# Module Descriptions
+# RISCV_CORE.v
+Integrates all submodules into the complete single-cycle datapath. Handles the program counter (PC) logic, including reset, BEQ branching, and JAL jumps.
+# alu.v
+Combinational ALU supporting ADD, SUB, XOR, OR, AND, SLT (signed), ADDI, XORI, SLTI, and BEQ flag generation. Controlled by a 6-bit alu_control signal from the CU.
+# cu.v
+Combinational control unit. Decodes opcode, funct3, and funct7 fields to generate alu_control, reg_write, mem_read, mem_write, alu_src, and mem_to_reg signals.
+# imm_gen.v
+Sign-extends and rearranges immediate fields for I, B, S, and J instruction formats.
+# inst_mem.v
+100-byte byte-addressable instruction ROM. Two versions exist: fibonacci.v contains a clean Fibonacci-only program; inst_mem.v contains a comprehensive instruction set test sequence (ADD through JAL).
+# data_mem.v
+256-byte synchronous data memory supporting word-aligned LW (load word) and SW (store word) in little-endian byte order.
+# test_reg_file.v
+32-entry × 32-bit synchronous register file. Register x0 is hardwired to zero. Supports simultaneous read of two registers and write of one register per cycle.
+# seven_seg.v
+Time-multiplexed 4-digit 7-segment display driver. Refreshes at ~381 Hz using a 20-bit counter from the 100 MHz clock. Decodes 4-bit hex nibbles to 7-segment patterns.
+# TOP.v
+Basys 3 top-level wrapper. Instantiates the CPU core and display driver, routes board I/O, and provides the clock divider.
+
